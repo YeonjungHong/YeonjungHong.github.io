@@ -65,88 +65,109 @@ Kernel PCA를 이해하기 위해서는 먼저 PCA를 이해해야 한다.
 
 - 본 실습에서는 RBF kernel과 Polynomial kernel, 2가지를 적용시킨 KPCA를 구현하고자 한다.
 
-#### RBF kernel
+#### RBF kernel function
 K(x, y) = exp(-gamma ||x-y||^2)
-  
 <pre><code>
 	<blockquote>	
-	<p>def rbf\_kernel(X, gamma=None):
+	<p>
+	from scipy.spatial.distance import pdist, squareform
+	def rbf\_kernel(X, gamma=1/):
+		\# 1. compute pairwise squared euclidean distance
 		\# dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 	    sq\_dists = pdist(X, 'sqeuclidean')
 	    mat\_sq\_dists = squareform(sq\_dists)
+	    \# 2. compute RBF kernel matrix
 	    K = np.exp(-gamma * mat\_sq\_dists)
 	    return K
 	</p>
 	</blockquote>	
 </code></pre>
 
+#### Polynomial kernel function
 K(X, Y) = (gamma <X, Y> + coef0)^degree
 <pre><code>
 	<blockquote>	
-	<p>def polynomial\_kernel(X, degree=3, gamma=None, coef0=1):
+	<p>
+	def polynomial_kernel(X, degree=3, gamma=None, coef0=1):
 		K = (gamma\*np.dot(X,X) + coef0)**degree
     	return K
 	</p>
 	</blockquote>	
 </code></pre>
 
+#### Kernel PCA 
 <pre><code>
 	<blockquote>	
-	<p>def kernel\_pca(X, gamma, n\_components, kernel="rbf"):
+	<p>
+	from scipy.linalg import eigh
+	def kernel_pca(X, gamma, n_components, kernel="rbf"):
+		# 1. Compute kernel function
 	    if kernel == "rbf":
-	        K = rbf\_kernel()
+	        K = rbf_kernel(X, gamma=gamma)
 	    elif kernel == "poly":
-	        K = polynomial\_kernel()
-	    elif kernel == "sig":
-	        K = sigmoid\_kernel()
+	        K = polynomial_kernel(X, gamma=gamma)
+	        
+		# Gram matrix
 	    N = K.shape[0]
-	    one\_n = np.ones((N,N)) / N
-	    K = K - one_n.dot(K) - K.dot(one\_n) + one\_n.dot(K).dot(one\_n)
+	    one_N = np.ones((N,N)) / N
+	    K = K - one_N.dot(K) - K.dot(one_N) + one_N.dot(K).dot(one_N)
 	    eigvals, eigvecs = eigh(K)
-	    X\_pc = np.column\_stack((eigvecs[:, -i]
-                            for i in range(1, n\_components + 1)))
-    	return X\_pc
+	    X_pc = np.column_stack((eigvecs[:, -i]
+                            for i in range(1, n_components + 1)))
+    	return X_pc
     </p>
     </blockquote>	
 </code></pre>
+
+#### 원본 데이터 
 <pre><code>
 	<blockquote>	
-	<p>X, y = make\_circles(n\_samples=400, factor=.3, noise=.05)
+	<p>
+	# Import dataset
+	from sklearn.datasets import make_circles
+	X, y = make_circles(n_samples=400, factor=.3, noise=.05)
 	
-	\# Plot results
-	
+	# Plot the 
 	plt.figure()
-	plt.subplot(1, 2, 1, aspect='equal')
-	plt.title("Original space")
+	plt.title("Data in original space")
 	reds = y == 0
 	blues = y == 1
 	
-	plt.scatter(X[reds, 0], X[reds, 1], c="red",
-	            s=20, edgecolor='k')
-	plt.scatter(X[blues, 0], X[blues, 1], c="blue",
-	            s=20, edgecolor='k')
-	plt.xlabel("$x_1$")
-	plt.ylabel("$x_2$")
+	plt.scatter(X[reds, 0], X[reds, 1], c="red", s=20, edgecolor='k')
+	plt.scatter(X[blues, 0], X[blues, 1], c="blue", s=20, edgecolor='k')
+	</p>
+	</blockquote>
+</code></pre>
+![Image of original](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/original.png?raw=true)
+#### KPCA 결과 - RBF kernel & Polynomial kernel 비교
+<pre><code>
+	<blockquote>	
+	<p>	
+	# Compute kernel PCA
+	X_kpca_rbf = kernel_pca(X, gamma=10, n_components=2, kernel="rbf")
+	X_kpca_poly = kernel_pca(X, gamma=10, n_components=2, kernel="poly")
 	
-	X1, X2 = np.meshgrid(np.linspace(-1.5, 1.5, 50), np.linspace(-1.5, 1.5, 50))
-	X_grid = np.array([np.ravel(X1), np.ravel(X2)]).T
-	\# projection on the first principal component (in the phi space)
-	Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
-	plt.contour(X1, X2, Z_grid, colors='grey', linewidths=1, origin='lower')
+	# Scatter plot RBF(left), Polynomial(right)
+	fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(7, 3))
+	ax[0].scatter(X_kpca_rbf[reds, 0], X_kpca_rbf[reds, 1],
+	              color='red', marker='^', alpha=0.5)
+	ax[0].scatter(X_kpca_rbf[blues, 0], X_kpca_rbf[blues, 1],
+	              color='blue', marker='o', alpha=0.5)
 	
+	ax[1].scatter(X_kpca_poly[reds, 0], X_kpca_poly[reds, 1],
+	              color='red', marker='^', alpha=0.5)
+	ax[1].scatter(X_kpca_poly[blues, 0], X_kpca_poly[blues, 1],
+	              color='blue', marker='o', alpha=0.5)
 	
-	plt.subplot(1, 2, 2, aspect='equal')
-	plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
-	            s=20, edgecolor='k')
-	plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
-	            s=20, edgecolor='k')
-	plt.title("Projection by KPCA")
-	plt.xlabel("1st principal component in space induced by $\phi$")
-	plt.ylabel("2nd component")
+	ax[0].title.set_text('RBF')
+	ax[0].set_xlabel('PC1')
+	ax[0].set_ylabel('PC2')
 	
-	
-	plt.show()
+	ax[1].title.set_text('Polynomial')
+	ax[1].set_xlabel('PC1')
+	ax[1].set_ylabel('PC2')
 	</p>
 	</blockquote>	
 </code></pre>
+![Image of RBF_poly_kpca](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/RBF_poly_kpca.png?raw=true)
 <p align="right"> Yeonjung Hong <p>
