@@ -13,12 +13,13 @@ mathjax: true
 featured: true
 published: true
 ---
-
 ## Principal Component Analysis
 
-- PCA는 기본적으로 특징추출 기법이다.
-- 정보 손실을 최소화 하면서  M차원 데이터를 m차원으로 차원 축소하는 것
-- 실제 단계
+Kernel PCA를 이해하기 위해서는 먼저 PCA를 이해해야 한다. 
+
+- 목적: 차원 축소를 통한 특징추출
+- 원리: 데이터를 설명하는 새로운 벡터공간의 축을 찾을 때, 공분산 정보를 최대한 보존하고자 한다. 따라서 새로운 축은 공분산의 eigenvector중에 eigenvalue가 높은 것들이 선택된다.
+- 단계
 	1. 각 feature의 평균이 0, 표준편차가 1이 되도록 feature normalization
 	2. feature의 공분산 행렬 구하기
 	3. Singular Vector Decomposition을 통해 공분산의 Eigenvectors와 Eigenvalue 구하기 
@@ -34,7 +35,7 @@ published: true
 ## PCA vs Linear Regression
 - PCA
 	- Unsupervised
-	- 모델-데이터 간 수직 거리 최소화
+	- 모델-데이터 간 ***수직 거리*** 최소화 --> 공분산 정보 최대 캡쳐
 
 - Linear Regression
 	- Supervised
@@ -54,29 +55,43 @@ published: true
 
 
 ## Kernel Principal Component Analysis
-- PCA가 linear space로의 차원축소를 해낸다면, KPCA는 nonlinear space로의 차원축소를 해낸다. 
+- PCA가 linear space로의 차원축소 기법이라면, KPCA는 nonlinear space로의 차원축소 기법이다.
+- PCA가 데이터의 공분산으로부터 구한 eigenvector에 데이터를 projection 시켰다면, KPCA는 nonlinear kernel 함수를 거쳐 새로운 공간에 있다고 여겨지는 데이터의 공분산으로부터 동일 작업을 수행한다. 
+- 몇가지 수식 전개를 통해 KPCA의 절차는 다음과 같은 단계로 요약된다.
+	1. kernel 함수를 선택한다.
+	2. kernel 함수로부터 Gram 행렬을 구한다. KPCA에서의 공분산 행렬에 해당한다.
+	3. PCA에서와 마찬가지로 eigenvalue가 높은 eigenvector를 선정한다.
+	4. 선정된 eigenvector에 데이터를 project한다.
+
+- 본 실습에서는 RBF kernel과 Polynomial kernel, 2가지를 적용시킨 KPCA를 구현하고자 한다.
+
+#### RBF kernel
+K(x, y) = exp(-gamma ||x-y||^2)
+  
 <pre><code>
+	<blockquote>	
 	<p>def rbf\_kernel(X, gamma=None):
+		\# dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 	    sq\_dists = pdist(X, 'sqeuclidean')
 	    mat\_sq\_dists = squareform(sq\_dists)
-	    K = exp(-gamma * mat\_sq\_dists)
+	    K = np.exp(-gamma * mat\_sq\_dists)
 	    return K
 	</p>
+	</blockquote>	
 </code></pre>
+
+K(X, Y) = (gamma <X, Y> + coef0)^degree
 <pre><code>
+	<blockquote>	
 	<p>def polynomial\_kernel(X, degree=3, gamma=None, coef0=1):
 		K = (gamma\*np.dot(X,X) + coef0)**degree
     	return K
 	</p>
+	</blockquote>	
 </code></pre>
+
 <pre><code>
-	<p>def sigmoid\_kernel(X, gamma=None, coef0=1):
-    	K = gamma\*np.dot(X,X) + coef0
-    	K = np.tanh(K,K)
-    	return K
-	</p>
-</code></pre>
-<pre><code>
+	<blockquote>	
 	<p>def kernel\_pca(X, gamma, n\_components, kernel="rbf"):
 	    if kernel == "rbf":
 	        K = rbf\_kernel()
@@ -92,7 +107,46 @@ published: true
                             for i in range(1, n\_components + 1)))
     	return X\_pc
     </p>
+    </blockquote>	
 </code></pre>
-
-
+<pre><code>
+	<blockquote>	
+	<p>X, y = make\_circles(n\_samples=400, factor=.3, noise=.05)
+	
+	\# Plot results
+	
+	plt.figure()
+	plt.subplot(1, 2, 1, aspect='equal')
+	plt.title("Original space")
+	reds = y == 0
+	blues = y == 1
+	
+	plt.scatter(X[reds, 0], X[reds, 1], c="red",
+	            s=20, edgecolor='k')
+	plt.scatter(X[blues, 0], X[blues, 1], c="blue",
+	            s=20, edgecolor='k')
+	plt.xlabel("$x_1$")
+	plt.ylabel("$x_2$")
+	
+	X1, X2 = np.meshgrid(np.linspace(-1.5, 1.5, 50), np.linspace(-1.5, 1.5, 50))
+	X_grid = np.array([np.ravel(X1), np.ravel(X2)]).T
+	\# projection on the first principal component (in the phi space)
+	Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
+	plt.contour(X1, X2, Z_grid, colors='grey', linewidths=1, origin='lower')
+	
+	
+	plt.subplot(1, 2, 2, aspect='equal')
+	plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
+	            s=20, edgecolor='k')
+	plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
+	            s=20, edgecolor='k')
+	plt.title("Projection by KPCA")
+	plt.xlabel("1st principal component in space induced by $\phi$")
+	plt.ylabel("2nd component")
+	
+	
+	plt.show()
+	</p>
+	</blockquote>	
+</code></pre>
 <p align="right"> Yeonjung Hong <p>
