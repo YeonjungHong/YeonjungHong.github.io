@@ -71,13 +71,15 @@ K(x, y) = exp(-gamma ||x-y||^2)
 	<blockquote>	
 	<p>
 	from scipy.spatial.distance import pdist, squareform
-	def rbf\_kernel(X, gamma=1/):
-		\# 1. compute pairwise squared euclidean distance
-		\# dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
-	    sq\_dists = pdist(X, 'sqeuclidean')
-	    mat\_sq\_dists = squareform(sq\_dists)
-	    \# 2. compute RBF kernel matrix
-	    K = np.exp(-gamma * mat\_sq\_dists)
+	def rbf_kernel(X, gamma=None):
+		 # 1. compute pairwise squared euclidean distance
+		 # dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+	    sq_dists = pdist(X, 'sqeuclidean')
+	    mat_sq_dists = squareform(sq_dists)
+	    # 2. compute RBF kernel matrix
+	    if gamma is None:
+	    	gamma = 1/X.shape[0]
+	    K = np.exp(-gamma * mat_sq_dists)
 	    return K
 	</p>
 	</blockquote>	
@@ -89,7 +91,9 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	<blockquote>	
 	<p>
 	def polynomial_kernel(X, degree=3, gamma=None, coef0=1):
-		K = (gamma\*np.dot(X,X) + coef0)**degree
+		if gamma is None:
+	    	gamma = 1/X.shape[0]
+		K = (gamma * np.dot(X,X) + coef0)**degree
     	return K
 	</p>
 	</blockquote>	
