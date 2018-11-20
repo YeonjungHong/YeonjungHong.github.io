@@ -67,9 +67,7 @@ Kernel PCA를 이해하기 위해서는 먼저 PCA를 이해해야 한다.
 
 #### RBF kernel function
 K(x, y) = exp(-gamma ||x-y||^2)
-<pre><code>
-	<blockquote>	
-	<p>
+```python
 	from scipy.spatial.distance import pdist, squareform
 	def rbf_kernel(X, gamma=None):
 		# 1. compute pairwise squared euclidean distance
@@ -81,28 +79,20 @@ K(x, y) = exp(-gamma ||x-y||^2)
 			gamma = 1/X.shape[0]
 		K = np.exp(-gamma * mat_sq_dists)
 		return K
-	</p>
-	</blockquote>	
-</code></pre>
+```
 
 #### Polynomial kernel function
 K(X, Y) = (gamma <X, Y> + coef0)^degree
-<pre><code>
-	<blockquote>	
-	<p>
+```python
 	def polynomial_kernel(X, degree=3, gamma=None, coef0=1):
 		if gamma is None:
 	    	gamma = 1/X.shape[0]
 		K = (gamma * np.dot(X,X) + coef0)**degree
     	return K
-	</p>
-	</blockquote>	
-</code></pre>
+```
 
 #### Kernel PCA 
-<pre><code>
-	<blockquote>	
-	<p>
+```python
 	from scipy.linalg import eigh
 	def kernel_pca(X, gamma, n_components, kernel="rbf"):
 		# 1. Compute kernel function
@@ -118,14 +108,10 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 		eigvals, eigvecs = eigh(K)
 		X_pc = np.column_stack((eigvecs[:, -i] for i in range(1, n_components + 1)))
 		return X_pc
-    </p>
-    </blockquote>	
-</code></pre>
+```
 
 #### 원본 데이터 
-<pre><code>
-	<blockquote>	
-	<p>
+```python
 	# 데이터 불러오기
 	from sklearn.datasets import make_circles
 	X, y = make_circles(n_samples=400, factor=.3, noise=.05)
@@ -138,9 +124,7 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	
 	plt.scatter(X[reds, 0], X[reds, 1], c="red", s=20, edgecolor='k')
 	plt.scatter(X[blues, 0], X[blues, 1], c="blue", s=20, edgecolor='k')
-	</p>
-	</blockquote>
-</code></pre>
+```
 ![Image of original](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/original.png?raw=true)
 #### KPCA 결과 - RBF kernel & Polynomial kernel 비교
 ```python
