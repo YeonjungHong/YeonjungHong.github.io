@@ -13,6 +13,7 @@ mathjax: true
 featured: true
 published: true
 ---
+
 ## Principal Component Analysis
 
 Kernel PCA를 이해하기 위해서는 먼저 PCA를 이해해야 한다. 
@@ -68,16 +69,23 @@ Kernel PCA를 이해하기 위해서는 먼저 PCA를 이해해야 한다.
 #### RBF kernel function
 K(x, y) = exp(-gamma ||x-y||^2)
 ```python
-	from scipy.spatial.distance import pdist, squareform
 	def rbf_kernel(X, gamma=None):
-		# 1. compute pairwise squared euclidean distance
-		# dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
-		sq_dists = pdist(X, 'sqeuclidean')
-		mat_sq_dists = squareform(sq_dists)
-		# 2. compute RBF kernel matrix
+		# RBF kernel  = exp(-||x-y||^2 /2*var)
+		# ||x-y||^2 : pairwise squared euclidean distance
+		#             dist(x, y) = ||x||^2 - 2 * <x,y> + ||y||^2
+		# gamma: 1/2*var or given
+		
+		# 1. pairwise squared euclidean distance 구하기
+		dot_matrix = X.dot(X.T)
+		pairwise_square_distance = dot_matrix[:]
+		for i in range(pairwise_square_distance.shape[0]):
+		    for j in range(pairwise_square_distance.shape[1]):
+		        pairwise_square_distance[i,j] = np.sqrt((dot_matrix[i,i] - 2 * dot_matrix[i,j] + dot_matrix[j,j])**2)
+		        
+		# 2. RBF kernel 행렬 구하기
 		if gamma is None:
-			gamma = 1/X.shape[0]
-		K = np.exp(-gamma * mat_sq_dists)
+		    gamma = 1/X.shape[0]
+		K = np.exp(-gamma * pairwise_square_distance)
 		return K
 ```
 
@@ -95,17 +103,21 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 ```python
 	from scipy.linalg import eigh
 	def kernel_pca(X, gamma, n_components, kernel="rbf"):
-		# 1. Compute kernel function
+		# 1. kernel 행렬 구하기
 		if kernel == "rbf":
 			K = rbf_kernel(X, gamma=gamma)
 		elif kernel == "poly":
 			K = polynomial_kernel(X, gamma=gamma)
 	        
-		# Gram matrix
+		# 2. Gram 행렬 구하기
 		N = K.shape[0]
 		one_N = np.ones((N,N)) / N
 		K = K - one_N.dot(K) - K.dot(one_N) + one_N.dot(K).dot(one_N)
+		
+		# 3. eigenvector, eigenvalue 구하기
 		eigvals, eigvecs = eigh(K)
+		
+		# 4. eigenvalue가 큰 eigenvector 순으로 나열한 뒤, 지정한 상위 n_component만큼 선정하기
 		X_pc = np.column_stack((eigvecs[:, -i] for i in range(1, n_components + 1)))
 		return X_pc
 ```
@@ -126,9 +138,10 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	plt.scatter(X[blues, 0], X[blues, 1], c="blue", s=20, edgecolor='k')
 ```
 ![Image of original](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/original.png?raw=true)
+
 #### KPCA 결과 - RBF kernel & Polynomial kernel 비교
 ```python
-	# kernel PCA 실행
+	# kernel PCA 실행 (gamma값은 10으로 임의로 고정)
 	X_kpca_rbf = kernel_pca(X, gamma=10, n_components=2, kernel="rbf")
 	X_kpca_poly = kernel_pca(X, gamma=10, n_components=2, kernel="poly")
 	
@@ -152,5 +165,13 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	ax[1].set_xlabel('PC1')
 	ax[1].set_ylabel('PC2')	
 ```
-![Image of RBF_poly_kpca](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/RBF_poly_kpca.png?raw=true)
-<p align="right"> Yeonjung Hong <p>
+![Image of RBF_poly_kpca](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/kpca.png?raw=true)
+
+References
+
+- 강필성, 2018-2 BusinessAnalytics 수업자료
+- 오일석, 2008, 패턴인식, 교보문고.
+- charleshsliao, (2017, June 15). Preprocess: LDA and Kernel PCA in Python [Web log post]. Retrieved Nov 20, 2018, from https://charleshsliao.wordpress.com/2017/06/15/preprocess-lda-and-kernel-pca-in-python
+
+
+<p align="right"> 2018.11.20 홍연정 <p>
