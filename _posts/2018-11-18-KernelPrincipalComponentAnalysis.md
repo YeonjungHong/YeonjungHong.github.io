@@ -72,15 +72,15 @@ K(x, y) = exp(-gamma ||x-y||^2)
 	<p>
 	from scipy.spatial.distance import pdist, squareform
 	def rbf_kernel(X, gamma=None):
-		 # 1. compute pairwise squared euclidean distance
-		 # dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
-	    sq_dists = pdist(X, 'sqeuclidean')
-	    mat_sq_dists = squareform(sq_dists)
-	    # 2. compute RBF kernel matrix
-	    if gamma is None:
-	    	gamma = 1/X.shape[0]
-	    K = np.exp(-gamma * mat_sq_dists)
-	    return K
+		# 1. compute pairwise squared euclidean distance
+		# dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+		sq_dists = pdist(X, 'sqeuclidean')
+		mat_sq_dists = squareform(sq_dists)
+		# 2. compute RBF kernel matrix
+		if gamma is None:
+			gamma = 1/X.shape[0]
+		K = np.exp(-gamma * mat_sq_dists)
+		return K
 	</p>
 	</blockquote>	
 </code></pre>
@@ -106,19 +106,18 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	from scipy.linalg import eigh
 	def kernel_pca(X, gamma, n_components, kernel="rbf"):
 		# 1. Compute kernel function
-	    if kernel == "rbf":
-	        K = rbf_kernel(X, gamma=gamma)
-	    elif kernel == "poly":
-	        K = polynomial_kernel(X, gamma=gamma)
+		if kernel == "rbf":
+			K = rbf_kernel(X, gamma=gamma)
+		elif kernel == "poly":
+			K = polynomial_kernel(X, gamma=gamma)
 	        
 		# Gram matrix
-	    N = K.shape[0]
-	    one_N = np.ones((N,N)) / N
-	    K = K - one_N.dot(K) - K.dot(one_N) + one_N.dot(K).dot(one_N)
-	    eigvals, eigvecs = eigh(K)
-	    X_pc = np.column_stack((eigvecs[:, -i]
-                            for i in range(1, n_components + 1)))
-    	return X_pc
+		N = K.shape[0]
+		one_N = np.ones((N,N)) / N
+		K = K - one_N.dot(K) - K.dot(one_N) + one_N.dot(K).dot(one_N)
+		eigvals, eigvecs = eigh(K)
+		X_pc = np.column_stack((eigvecs[:, -i] for i in range(1, n_components + 1)))
+		return X_pc
     </p>
     </blockquote>	
 </code></pre>
@@ -127,11 +126,11 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 <pre><code>
 	<blockquote>	
 	<p>
-	# Import dataset
+	# 데이터 불러오기
 	from sklearn.datasets import make_circles
 	X, y = make_circles(n_samples=400, factor=.3, noise=.05)
 	
-	# Plot the 
+	# 데이터 플랏 
 	plt.figure()
 	plt.title("Data in original space")
 	reds = y == 0
@@ -147,7 +146,7 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 <pre><code>
 	<blockquote>	
 	<p>	
-	# Compute kernel PCA
+	# kernel PCA 실행
 	X_kpca_rbf = kernel_pca(X, gamma=10, n_components=2, kernel="rbf")
 	X_kpca_poly = kernel_pca(X, gamma=10, n_components=2, kernel="poly")
 	
