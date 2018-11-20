@@ -143,8 +143,7 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 </code></pre>
 ![Image of original](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/original.png?raw=true)
 #### KPCA 결과 - RBF kernel & Polynomial kernel 비교
-```
-python
+```python
 	# kernel PCA 실행
 	X_kpca_rbf = kernel_pca(X, gamma=10, n_components=2, kernel="rbf")
 	X_kpca_poly = kernel_pca(X, gamma=10, n_components=2, kernel="poly")
