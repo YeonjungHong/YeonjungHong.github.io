@@ -143,9 +143,8 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 </code></pre>
 ![Image of original](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/original.png?raw=true)
 #### KPCA 결과 - RBF kernel & Polynomial kernel 비교
-<pre><code>
-	<blockquote>	
-	<p>	
+```
+python
 	# kernel PCA 실행
 	X_kpca_rbf = kernel_pca(X, gamma=10, n_components=2, kernel="rbf")
 	X_kpca_poly = kernel_pca(X, gamma=10, n_components=2, kernel="poly")
@@ -168,9 +167,7 @@ K(X, Y) = (gamma <X, Y> + coef0)^degree
 	
 	ax[1].title.set_text('Polynomial')
 	ax[1].set_xlabel('PC1')
-	ax[1].set_ylabel('PC2')
-	</p>
-	</blockquote>	
-</code></pre>
+	ax[1].set_ylabel('PC2')	
+```
 ![Image of RBF_poly_kpca](https://github.com/YeonjungHong/YeonjungHong.github.io/blob/master/images/RBF_poly_kpca.png?raw=true)
 <p align="right"> Yeonjung Hong <p>
